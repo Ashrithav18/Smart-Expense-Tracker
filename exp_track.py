@@ -23,8 +23,8 @@ def add_expense(username,date, category, amount, description):
 
 # Function to load expenses
 def load_expenses(username):
-    file=get_user_file(username)
-    if os.path.exists(file):
+    file=f"expenses_{username}.CSV"
+    if os.path.exists(file) and os.path.getsize(file) > 0:
         return pd.read_csv(file)
     else:
         return pd.DataFrame(columns=["Date", "Category", "Amount", "Description"])
