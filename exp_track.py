@@ -4,26 +4,30 @@ import os
 from datetime import datetime
 import matplotlib.pyplot as plt
 
-FILE = "expenses.csv"
+def get_user_file(username):
+    return f"expenses_{username}.CSV"
 
 # Function to add expense
-def add_expense(date, category, amount, description):
+def add_expense(username,date, category, amount, description):
+    file=get_user_file(username)
     new_data = pd.DataFrame([[date, category, amount, description]],
                             columns=["Date", "Category", "Amount", "Description"])
     
-    if os.path.exists(FILE):
-        df = pd.read_csv(FILE)
+    if os.path.exists(file):
+        df = pd.read_csv(file)
         df = pd.concat([df, new_data], ignore_index=True)
     else:
         df = new_data
     
-    df.to_csv(FILE, index=False)
+    df.to_csv(file, index=False)
 
 # Function to load expenses
-def load_expenses():
-    if os.path.exists(FILE):
-        return pd.read_csv(FILE)
-    return pd.DataFrame(columns=["Date", "Category", "Amount", "Description"])
+def load_expenses(username):
+    file=get_user_file(username)
+    if os.path.exists(file):
+        return pd.read_csv(file)
+    else:
+        return pd.DataFrame(columns=["Date", "Category", "Amount", "Description"])
 
 # Function to suggest savings
 def suggest_savings(df):
@@ -44,42 +48,43 @@ def suggest_savings(df):
 # Streamlit UI
 st.title("💰 Smart Expense Tracker")
 
-menu = ["Add Expense", "View Expenses", "Summary & Suggestions"]
-choice = st.sidebar.selectbox("Menu", menu)
+# Ask for username
+username = st.text_input("Enter your username:")
 
-if choice == "Add Expense":
-    st.subheader("➕ Add New Expense")
-    
-    date = st.date_input("Date", datetime.today())
-    category = st.selectbox("Category", ["Food", "Travel", "Shopping", "current Bill","phone bill", "Other bill","Other"])
-    amount = st.number_input("Amount", min_value=1.0, step=0.5)
-    description = st.text_input("Description")
-    
-    if st.button("Save Expense"):
-        add_expense(date, category, amount, description)
-        st.success("✅ Expense added successfully!")
+if username:   # only run if username is entered
+    menu = ["Add Expense", "View Expenses", "Summary & Suggestions"]
+    choice = st.sidebar.selectbox("Menu", menu)
 
-elif choice == "View Expenses":
-    st.subheader("📋 All Expenses")
-    df = load_expenses()
-    st.dataframe(df)
+    if choice == "Add Expense":
+        st.subheader("➕ Add New Expense")
+        date = st.date_input("Date", datetime.today())
+        category = st.selectbox("Category", 
+                                ["Food", "Travel", "Shopping", "Current Bill", "Phone Bill", "Other Bill"])
+        amount = st.number_input("Amount", min_value=1.0, step=0.5)
+        description = st.text_input("Description")
 
-elif choice == "Summary & Suggestions":
-    st.subheader("📊 Expense Summary & Next Month Prediction")
-    df = load_expenses()
-    
-    if not df.empty:
-        summary = df.groupby("Category")["Amount"].sum()
-        st.bar_chart(summary)
+        if st.button("Save Expense"):
+            add_expense(username, date, category, amount, description)
+            st.success("✅ Expense added successfully!")
 
-        total = df["Amount"].sum()
-        avg_monthly = total  # assuming one month’s data
+    elif choice == "View Expenses":
+        st.subheader("📊 All Expenses")
+        df = load_expenses(username)
+        st.dataframe(df)
 
-        st.write(f"💵 *Total spent this month:* ₹{total:.2f}")
-        st.write(f"📈 *Estimated spend next month (same trend):* ₹{avg_monthly:.2f}")
+    elif choice == "Summary & Suggestions":
+        st.subheader("📈 Expense Summary & Next Month Prediction")
+        df = load_expenses(username)
 
-        # Suggestions
-        st.subheader("🔍 Smart Savings Suggestion")
-        st.info(suggest_savings(df))
-    else:
-        st.info("No expenses recorded yet.")
+        if not df.empty:
+            summary = df.groupby("Category")["Amount"].sum()
+            st.bar_chart(summary)
+
+            total = df["Amount"].sum()
+            avg_monthly = total  # simple assumption for demo
+
+            st.write(f"💵 *Total spent this month:* {total:.2f}")
+            st.write(f"📅 *Estimated spend next month (same trend):* {avg_monthly:.2f}")
+
+        else:
+            st.warning("No expenses found yet. Add some expenses first.")
