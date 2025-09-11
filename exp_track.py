@@ -85,6 +85,11 @@ if username:   # only run if username is entered
 
             st.write(f"💵 *Total spent this month:* {total:.2f}")
             st.write(f"📅 *Estimated spend next month (same trend):* {avg_monthly:.2f}")
+            
+    # Suggestions
+            st.subheader("🔍 Smart Savings Suggestion")
+            st.info(suggest_savings(df))
+
 
         else:
             st.warning("No expenses found yet. Add some expenses first.")
